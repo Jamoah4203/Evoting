@@ -1,9 +1,9 @@
-import { defineConfig, Plugin } from "vite";
-import react from "@vitejs/plugin-react-swc";
-import path from "path";
-import { createServer } from "./server";
+// vite.config.ts
+import { defineConfig, Plugin } from "vite"
+import react from "@vitejs/plugin-react-swc"
+import path from "path"
+import { createServer } from "./server"
 
-// https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
@@ -11,6 +11,16 @@ export default defineConfig(({ mode }) => ({
   },
   build: {
     outDir: "dist/spa",
+    chunkSizeWarningLimit: 1000, // 👈 Explained below
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          // Split out heavy vendor packages
+          react: ['react', 'react-dom'],
+          utility: ['zustand', 'axios'], // Add common utils you use
+        },
+      },
+    },
   },
   plugins: [react(), expressPlugin()],
   resolve: {
@@ -19,17 +29,15 @@ export default defineConfig(({ mode }) => ({
       "@shared": path.resolve(__dirname, "./shared"),
     },
   },
-}));
+}))
 
 function expressPlugin(): Plugin {
   return {
     name: "express-plugin",
-    apply: "serve", // Only apply during development (serve mode)
+    apply: "serve",
     configureServer(server) {
-      const app = createServer();
-
-      // Add Express app as middleware to Vite dev server
-      server.middlewares.use(app);
+      const app = createServer()
+      server.middlewares.use(app)
     },
-  };
+  }
 }
