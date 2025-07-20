@@ -14,8 +14,8 @@ interface AuthContextType {
     email: string,
     password: string,
     userData: {
-      firstName: string;
-      lastName: string;
+      first_name: string;
+      last_name: string;
       voterId: string;
       role: "voter" | "admin";
     },
@@ -108,8 +108,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     email: string,
     password: string,
     userData: {
-      firstName: string;
-      lastName: string;
+      first_name: string;
+      last_name: string;
       voterId: string;
       role: "voter" | "admin";
     },
@@ -119,8 +119,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setProfile({
         ...createDemoProfile(userData.role),
         email,
-        first_name: userData.firstName,
-        last_name: userData.lastName,
+        first_name: userData.first_name,
+        last_name: userData.last_name,
         voter_id: userData.voterId,
       });
       setUser({ email } as User);
@@ -141,8 +141,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           id: data.user.id,
           email,
           voter_id: userData.voterId,
-          first_name: userData.firstName,
-          last_name: userData.lastName,
+          first_name: userData.first_name,
+          last_name: userData.last_name,
           role: userData.role,
           is_verified: false,
         });

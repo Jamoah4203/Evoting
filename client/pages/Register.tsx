@@ -18,8 +18,8 @@ import { hasValidCredentials } from "@/lib/supabase";
 
 export default function Register() {
   const [formData, setFormData] = useState({
-    firstName: "",
-    lastName: "",
+    first_name: "",
+    last_name: "",
     email: "",
     voterId: "",
     password: "",
@@ -42,8 +42,8 @@ export default function Register() {
     }
 
     const { error } = await signUp(formData.email, formData.password, {
-      firstName: formData.firstName,
-      lastName: formData.lastName,
+      first_name: formData.first_name,
+      last_name: formData.last_name,
       voterId: formData.voterId,
       role: "voter", // Always default to voter role
     });
@@ -109,25 +109,25 @@ export default function Register() {
             )}
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="firstName">First Name</Label>
+                <Label htmlFor="first_name">First Name</Label>
                 <Input
-                  id="firstName"
+                  id="first_name"
                   placeholder="John"
-                  value={formData.firstName}
+                  value={formData.first_name}
                   onChange={(e) =>
-                    handleInputChange("firstName", e.target.value)
+                    handleInputChange("first_name", e.target.value)
                   }
                   required
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="lastName">Last Name</Label>
+                <Label htmlFor="last_name">Last Name</Label>
                 <Input
-                  id="lastName"
+                  id="last_name"
                   placeholder="Doe"
-                  value={formData.lastName}
+                  value={formData.last_name}
                   onChange={(e) =>
-                    handleInputChange("lastName", e.target.value)
+                    handleInputChange("last_name", e.target.value)
                   }
                   required
                 />
