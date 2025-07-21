@@ -104,55 +104,40 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  type SignUp = {
-  first_name: string;
-  last_name: string;
-  voterId: string;
-  role: "voter" | "admin";
-};
+  const signUp = async (userData) => {
+  const { email, password, first_name, last_name, voterId, role } = userData;
 
- const signUp = async (
-  email: string,
-  password: string,
-  userData: SignUp
-): Promise<{ error: any }> => {
-  // 🧪 Handle offline/demo mode (no Supabase key set)
-  if (!hasValidCredentials) {
-    const mockProfile = {
-      ...createDemoProfile(userData.role),
-      email,
-      first_name: userData.first_name,
-      last_name: userData.last_name,
-      voter_id: userData.voterId,
-    };
-
-    setProfile(mockProfile);
-    setUser({ email } as User);
-    return { error: null };
-  }
-
-  try {
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          first_name: userData.first_name,
-          last_name: userData.last_name,
-          voter_id: userData.voterId,
-          role: userData.role,
-          is_verified: false,
-        },
+  const { data, error: signUpError } = await supabase.auth.signUp({
+    email,
+    password,
+    options: {
+      data: {
+        first_name,
+        last_name,
+        voter_id: voterId,
+        role,
+        is_verified: false,
       },
+    },
+  });
+
+  if (signUpError) return { error: signUpError };
+
+  if (data.user) {
+    const { error: rpcError } = await supabase.rpc('create_user_profile', {
+      _id: data.user.id,
+      _email: email,
+      _first_name: first_name,
+      _last_name: last_name,
+      _voter_id: voterId,
+      _role: role,
+      _is_verified: false,
     });
 
-    if (error) return { error };
-
-    // ✅ Supabase trigger handles inserting into public.users
-    return { error: null };
-  } catch (error) {
-    return { error };
+    if (rpcError) return { error: rpcError };
   }
+
+  return { error: null };
 };
 
   const signIn = async (email: string, password: string) => {
