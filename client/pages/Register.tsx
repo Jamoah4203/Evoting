@@ -10,7 +10,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-
 import { Vote, Loader2, CheckCircle } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -21,10 +20,11 @@ export default function Register() {
     first_name: "",
     last_name: "",
     email: "",
-    voterId: "",
+    voter_id: "",
     password: "",
     confirmPassword: "",
   });
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
@@ -32,24 +32,34 @@ export default function Register() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
     setError("");
 
-    if (formData.password !== formData.confirmPassword) {
-      setError("Passwords do not match");
-      setLoading(false);
+    if (
+      !formData.first_name ||
+      !formData.last_name ||
+      !formData.voter_id ||
+      !formData.email ||
+      !formData.password
+    ) {
+      setError("All fields are required.");
       return;
     }
 
+    if (formData.password !== formData.confirmPassword) {
+      setError("Passwords do not match.");
+      return;
+    }
+
+    setLoading(true);
     const { error } = await signUp(formData.email, formData.password, {
       first_name: formData.first_name,
       last_name: formData.last_name,
-      voterId: formData.voterId,
-      role: "voter", // Always default to voter role
+      voterId: formData.voter_id,
+      role: "voter",
     });
 
     if (error) {
-      setError(error.message);
+      setError(error.message || "An error occurred during registration.");
     } else {
       setSuccess(true);
     }
@@ -145,12 +155,14 @@ export default function Register() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="voterId">Voter ID</Label>
+              <Label htmlFor="voter_id">Voter ID</Label>
               <Input
-                id="voterId"
+                id="voter_id"
                 placeholder="Enter your voter ID"
-                value={formData.voterId}
-                onChange={(e) => handleInputChange("voterId", e.target.value)}
+                value={formData.voter_id}
+                onChange={(e) =>
+                  handleInputChange("voter_id", e.target.value)
+                }
                 required
               />
             </div>
@@ -160,7 +172,9 @@ export default function Register() {
                 id="password"
                 type="password"
                 value={formData.password}
-                onChange={(e) => handleInputChange("password", e.target.value)}
+                onChange={(e) =>
+                  handleInputChange("password", e.target.value)
+                }
                 required
               />
             </div>

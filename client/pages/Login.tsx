@@ -21,13 +21,14 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
   const { signIn, user, profile } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Redirect if already logged in
-    if (user && profile) {
-      navigate(profile.role === "admin" ? "/admin" : "/voter");
+    if (user && profile?.role) {
+      const target = profile.role === "admin" ? "/admin" : "/voter";
+      navigate(target);
     }
   }, [user, profile, navigate]);
 
@@ -39,10 +40,10 @@ export default function Login() {
     const { error } = await signIn(email, password);
 
     if (error) {
-      setError(error.message);
+      setError(error.message || "Login failed. Please try again.");
       setLoading(false);
     }
-    // Role-based redirect will happen via useEffect
+    // Redirect happens in useEffect once profile loads
   };
 
   return (
@@ -74,7 +75,7 @@ export default function Login() {
                 <Input
                   id="email"
                   type="email"
-                  placeholder="Enter your email"
+                  placeholder="you@example.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
@@ -85,6 +86,7 @@ export default function Login() {
                 <Input
                   id="password"
                   type="password"
+                  placeholder="••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required

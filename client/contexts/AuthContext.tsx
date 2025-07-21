@@ -104,57 +104,56 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const signUp = async (
-    email: string,
-    password: string,
-    userData: {
-      first_name: string;
-      last_name: string;
-      voterId: string;
-      role: "voter" | "admin";
-    },
-  ) => {
-    if (!hasValidCredentials) {
-      // Demo mode
-      setProfile({
-        ...createDemoProfile(userData.role),
-        email,
-        first_name: userData.first_name,
-        last_name: userData.last_name,
-        voter_id: userData.voterId,
-      });
-      setUser({ email } as User);
-      return { error: null };
-    }
+  type SignUp = {
+  first_name: string;
+  last_name: string;
+  voterId: string;
+  role: "voter" | "admin";
+};
 
-    try {
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-      });
+ const signUp = async (
+  email: string,
+  password: string,
+  userData: SignUp
+): Promise<{ error: any }> => {
+  // 🧪 Handle offline/demo mode (no Supabase key set)
+  if (!hasValidCredentials) {
+    const mockProfile = {
+      ...createDemoProfile(userData.role),
+      email,
+      first_name: userData.first_name,
+      last_name: userData.last_name,
+      voter_id: userData.voterId,
+    };
 
-      if (error) return { error };
+    setProfile(mockProfile);
+    setUser({ email } as User);
+    return { error: null };
+  }
 
-      if (data.user) {
-        // Create user profile
-        const { error: profileError } = await supabase.from("users").insert({
-          id: data.user.id,
-          email,
-          voter_id: userData.voterId,
+  try {
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
           first_name: userData.first_name,
           last_name: userData.last_name,
+          voter_id: userData.voterId,
           role: userData.role,
           is_verified: false,
-        });
+        },
+      },
+    });
 
-        if (profileError) return { error: profileError };
-      }
+    if (error) return { error };
 
-      return { error: null };
-    } catch (error) {
-      return { error };
-    }
-  };
+    // ✅ Supabase trigger handles inserting into public.users
+    return { error: null };
+  } catch (error) {
+    return { error };
+  }
+};
 
   const signIn = async (email: string, password: string) => {
     if (!hasValidCredentials) {
