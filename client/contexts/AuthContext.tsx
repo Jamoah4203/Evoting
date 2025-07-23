@@ -1,3 +1,5 @@
+"use client";
+
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { User, Session } from "@supabase/supabase-js";
 import { supabase, hasValidCredentials } from "@/lib/supabase";
@@ -33,7 +35,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Create demo profile if no valid Supabase credentials
   const createDemoProfile = (
     role: "admin" | "voter" = "admin",
   ): UserProfile => ({
@@ -50,35 +51,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (!hasValidCredentials) {
-      // Demo mode - no Supabase connection
-      console.log(
-        "🎭 Running in demo mode. Please configure Supabase credentials for full functionality.",
-      );
+      console.log("🎭 Running in demo mode.");
       setLoading(false);
       return;
     }
 
-    // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
-      if (session?.user) {
-        fetchUserProfile(session.user.id);
-      } else {
-        setLoading(false);
-      }
+      if (session?.user) fetchUserProfile(session.user.id);
+      else setLoading(false);
     });
 
-    // Listen for auth changes
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event, session) => {
+    } = supabase.auth.onAuthStateChange(async (_event, session) => {
       setSession(session);
       setUser(session?.user ?? null);
-
-      if (session?.user) {
-        await fetchUserProfile(session.user.id);
-      } else {
+      if (session?.user) await fetchUserProfile(session.user.id);
+      else {
         setProfile(null);
         setLoading(false);
       }
@@ -97,52 +88,71 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (error) throw error;
       setProfile(data);
-    } catch (error) {
-      console.error("Error fetching user profile:", error);
+    } catch (err) {
+      console.error("❌ Error fetching user profile:", err);
     } finally {
       setLoading(false);
     }
   };
 
-  const signUp = async (userData) => {
-  const { email, password, first_name, last_name, voterId, role } = userData;
-
-  const { data, error: signUpError } = await supabase.auth.signUp({
-    email,
-    password,
-    options: {
-      data: {
-        first_name,
-        last_name,
-        voter_id: voterId,
-        role,
-        is_verified: false,
-      },
+  const signUp = async (
+    email: string,
+    password: string,
+    {
+      first_name,
+      last_name,
+      voterId,
+      role = "voter",
+    }: {
+      first_name: string;
+      last_name: string;
+      voterId: string;
+      role: "voter" | "admin";
     },
-  });
-
-  if (signUpError) return { error: signUpError };
-
-  if (data.user) {
-    const { error: rpcError } = await supabase.rpc('create_user_profile', {
-      _id: data.user.id,
-      _email: email,
-      _first_name: first_name,
-      _last_name: last_name,
-      _voter_id: voterId,
-      _role: role,
-      _is_verified: false,
+  ) => {
+    const { data, error: signUpError } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
+          first_name,
+          last_name,
+          voter_id: voterId,
+          role,
+          is_verified: false,
+        },
+      },
     });
 
-    if (rpcError) return { error: rpcError };
-  }
+    if (signUpError) {
+      console.error("❌ Supabase Auth SignUp Error:", signUpError);
+      return { error: signUpError };
+    }
 
-  return { error: null };
-};
+    const userId = data.user?.id;
+
+    if (userId) {
+      const { error: rpcError } = await supabase.rpc("create_user_profile", {
+        _id: userId,
+        _email: email,
+        _first_name: first_name,
+        _last_name: last_name,
+        _voter_id: voterId,
+        _role: role,
+        _is_verified: false,
+      });
+
+      if (rpcError) {
+        console.error("❌ RPC profile creation error:", rpcError);
+        return { error: rpcError };
+      }
+    }
+
+    return { error: null };
+  };
 
   const signIn = async (email: string, password: string) => {
     if (!hasValidCredentials) {
-      // Demo mode - simulate successful login
       const role = email.includes("admin") ? "admin" : "voter";
       setProfile(createDemoProfile(role));
       setUser({ email } as User);
@@ -153,18 +163,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       email,
       password,
     });
+
+    if (error) console.error("❌ Sign in error:", error);
     return { error };
   };
 
   const signOut = async () => {
     if (!hasValidCredentials) {
-      // Demo mode
       setUser(null);
       setProfile(null);
       return;
     }
 
     await supabase.auth.signOut();
+    setUser(null);
+    setProfile(null);
   };
 
   const isAdmin = profile?.role === "admin";

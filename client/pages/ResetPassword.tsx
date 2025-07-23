@@ -1,3 +1,5 @@
+// ✅ ResetPassword.tsx
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -52,29 +54,21 @@ export default function ResetPassword() {
       return;
     }
 
-    if (!hasValidCredentials) {
-      // Demo mode
-      console.log("Demo mode: Password would be reset");
-      setSuccess(true);
-      setLoading(false);
-      return;
-    }
-
     try {
-      const { error } = await supabase.auth.updateUser({
-        password: password,
-      });
-
-      if (error) {
-        setError(error.message);
-      } else {
+      if (!hasValidCredentials) {
+        console.log("Demo mode: Password would be reset");
         setSuccess(true);
-        setTimeout(() => {
-          navigate("/login");
-        }, 2000);
+        return;
       }
-    } catch (err) {
-      setError("An unexpected error occurred. Please try again.");
+
+      const { error } = await supabase.auth.updateUser({ password });
+
+      if (error) throw error;
+
+      setSuccess(true);
+      setTimeout(() => navigate("/login"), 2000);
+    } catch (err: any) {
+      setError(err.message || "An unexpected error occurred. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -90,8 +84,7 @@ export default function ResetPassword() {
             </div>
             <CardTitle className="text-2xl">Password Reset!</CardTitle>
             <CardDescription>
-              Your password has been successfully updated. You will be
-              redirected to the login page shortly.
+              Your password has been successfully updated. Redirecting...
             </CardDescription>
           </CardHeader>
           <CardContent>

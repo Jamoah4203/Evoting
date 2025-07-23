@@ -1,3 +1,5 @@
+// ✅ ForgotPassword.tsx
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -25,26 +27,21 @@ export default function ForgotPassword() {
     setLoading(true);
     setError("");
 
-    if (!hasValidCredentials) {
-      // Demo mode
-      console.log("Demo mode: Password reset email would be sent to:", email);
-      setSuccess(true);
-      setLoading(false);
-      return;
-    }
-
     try {
+      if (!hasValidCredentials) {
+        console.log("Demo mode: Password reset email would be sent to:", email);
+        setSuccess(true);
+        return;
+      }
+
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: `${window.location.origin}/reset-password`,
       });
 
-      if (error) {
-        setError(error.message);
-      } else {
-        setSuccess(true);
-      }
-    } catch (err) {
-      setError("An unexpected error occurred. Please try again.");
+      if (error) throw error;
+      setSuccess(true);
+    } catch (err: any) {
+      setError(err.message || "An unexpected error occurred. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -60,9 +57,7 @@ export default function ForgotPassword() {
             </div>
             <CardTitle className="text-2xl">Check Your Email</CardTitle>
             <CardDescription>
-              {hasValidCredentials
-                ? "We've sent a password reset link to your email address."
-                : "In demo mode, a password reset email would be sent to your address."}
+              We've sent a password reset link to your email address.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -89,8 +84,7 @@ export default function ForgotPassword() {
           </div>
           <CardTitle className="text-2xl">Forgot Password?</CardTitle>
           <CardDescription>
-            Enter your email address and we'll send you a link to reset your
-            password.
+            Enter your email address and we'll send you a link to reset your password.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -117,7 +111,7 @@ export default function ForgotPassword() {
             </Button>
           </form>
           <div className="mt-4 text-center text-sm text-gray-600">
-            Remember your password?{" "}
+            Remember your password?{' '}
             <Link to="/login" className="text-primary hover:underline">
               Back to Login
             </Link>

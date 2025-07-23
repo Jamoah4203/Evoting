@@ -201,7 +201,7 @@ export default function Register() {
               Sign in
             </Link>
           </div>
-        </CardContent>
+        </CardContent> 
       </Card>
     </div>
   );

@@ -27,8 +27,8 @@ export default function Login() {
 
   useEffect(() => {
     if (user && profile?.role) {
-      const target = profile.role === "admin" ? "/admin" : "/voter";
-      navigate(target);
+      const targetRoute = profile.role === "admin" ? "/admin" : "/voter";
+      navigate(targetRoute);
     }
   }, [user, profile, navigate]);
 
@@ -37,13 +37,14 @@ export default function Login() {
     setLoading(true);
     setError("");
 
-    const { error } = await signIn(email, password);
+    const { error: signInError } = await signIn(email, password);
 
-    if (error) {
-      setError(error.message || "Login failed. Please try again.");
+    if (signInError) {
+      setError(signInError.message || "Login failed. Please try again.");
       setLoading(false);
     }
-    // Redirect happens in useEffect once profile loads
+
+    // If no error, the redirect will happen from useEffect
   };
 
   return (
@@ -97,13 +98,15 @@ export default function Login() {
                 Sign In
               </Button>
             </form>
+
             <div className="mt-4 text-center text-sm text-gray-600">
               <Link to="/forgot-password" className="hover:underline">
                 Forgot your password?
               </Link>
             </div>
+
             <div className="mt-2 text-center text-sm text-gray-600">
-              Don't have an account?{" "}
+              Don’t have an account?{" "}
               <Link to="/register" className="text-primary hover:underline">
                 Sign up
               </Link>
