@@ -31,23 +31,19 @@ import {
   Vote,
   Users,
   BarChart3,
-  Settings,
   Plus,
   Play,
   Pause,
   Eye,
   EyeOff,
-  Calendar,
-  Edit,
-  Trash2,
   UserCheck,
   UserX,
+  Calendar,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { supabase, hasValidCredentials } from "@/lib/supabase";
+import { supabase } from "@/lib/supabase";
 import { Database } from "@shared/database.types";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
-import { getDemoData } from "@/lib/demo-data";
 import { DemoNotice } from "@/components/DemoNotice";
 
 type Election = Database["public"]["Tables"]["elections"]["Row"];
@@ -81,13 +77,6 @@ function AdminDashboardContent() {
 
   const fetchElections = async () => {
     try {
-      if (!hasValidCredentials) {
-        // Use demo data
-        const demoData = getDemoData();
-        setElections(demoData.elections);
-        return;
-      }
-
       const { data, error } = await supabase
         .from("elections")
         .select("*")
@@ -102,14 +91,6 @@ function AdminDashboardContent() {
 
   const fetchUsers = async () => {
     try {
-      if (!hasValidCredentials) {
-        // Use demo data
-        const demoData = getDemoData();
-        setUsers(demoData.users);
-        setLoading(false);
-        return;
-      }
-
       const { data, error } = await supabase.from("users").select("*");
 
       if (error) throw error;
@@ -123,19 +104,6 @@ function AdminDashboardContent() {
 
   const createElection = async () => {
     try {
-      if (!hasValidCredentials) {
-        // Demo mode - simulate creation
-        console.log("Demo mode: Election would be created:", newElection);
-        setCreateElectionOpen(false);
-        setNewElection({
-          title: "",
-          description: "",
-          startDate: "",
-          endDate: "",
-        });
-        return;
-      }
-
       const { error } = await supabase.from("elections").insert({
         title: newElection.title,
         description: newElection.description,
@@ -159,16 +127,8 @@ function AdminDashboardContent() {
     }
   };
 
-  const toggleElectionStatus = async (
-    electionId: string,
-    isActive: boolean,
-  ) => {
+  const toggleElectionStatus = async (electionId: string, isActive: boolean) => {
     try {
-      if (!hasValidCredentials) {
-        console.log("Demo mode: Election status would be toggled");
-        return;
-      }
-
       const { error } = await supabase
         .from("elections")
         .update({ is_active: !isActive })
@@ -183,14 +143,9 @@ function AdminDashboardContent() {
 
   const toggleResultsPublication = async (
     electionId: string,
-    isPublished: boolean,
+    isPublished: boolean
   ) => {
     try {
-      if (!hasValidCredentials) {
-        console.log("Demo mode: Results publication would be toggled");
-        return;
-      }
-
       const { error } = await supabase
         .from("elections")
         .update({ results_published: !isPublished })
@@ -205,11 +160,6 @@ function AdminDashboardContent() {
 
   const verifyUser = async (userId: string, isVerified: boolean) => {
     try {
-      if (!hasValidCredentials) {
-        console.log("Demo mode: User verification would be updated");
-        return;
-      }
-
       const { error } = await supabase
         .from("users")
         .update({ is_verified: !isVerified })

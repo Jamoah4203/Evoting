@@ -1,4 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import { useSignIn } from "@clerk/clerk-react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -11,46 +13,47 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Vote, Loader2 } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
+import { Link } from "react-router-dom";
 import { DemoLogin } from "@/components/DemoLogin";
-import { hasValidCredentials } from "@/lib/supabase";
 
 export default function Login() {
+  const { isLoaded, signIn, setActive } = useSignIn();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-
-  const { signIn, user, profile } = useAuth();
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-
-  useEffect(() => {
-    if (user && profile?.role) {
-      const targetRoute = profile.role === "admin" ? "/admin" : "/voter";
-      navigate(targetRoute);
-    }
-  }, [user, profile, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
     setError("");
+    
+    if (!isLoaded) return;
 
-    const { error: signInError } = await signIn(email, password);
+    setLoading(true);
+    try {
+      const result = await signIn.create({
+        identifier: email,
+        password,
+      });
 
-    if (signInError) {
-      setError(signInError.message || "Login failed. Please try again.");
+      if (result.status === "complete") {
+        await setActive({ session: result.createdSessionId });
+        navigate("/");
+      } else {
+        setError("Additional steps required. Please check your email.");
+      }
+    } catch (err: any) {
+      setError(err.errors?.[0]?.message || "Failed to sign in.");
+    } finally {
       setLoading(false);
     }
-
-    // If no error, the redirect will happen from useEffect
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 flex items-center justify-center p-4">
       <div className="space-y-6">
-        {!hasValidCredentials && <DemoLogin />}
+        <DemoLogin />
 
         <Card className="w-full max-w-md">
           <CardHeader className="text-center">
@@ -106,7 +109,7 @@ export default function Login() {
             </div>
 
             <div className="mt-2 text-center text-sm text-gray-600">
-              Don’t have an account?{" "}
+              Don't have an account?{" "}
               <Link to="/register" className="text-primary hover:underline">
                 Sign up
               </Link>

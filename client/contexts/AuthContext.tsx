@@ -1,205 +1,114 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useState } from "react";
-import { User, Session } from "@supabase/supabase-js";
-import { supabase, hasValidCredentials } from "@/lib/supabase";
-import { Database } from "@shared/database.types";
+import {
+  useUser,
+  useAuth as useClerkAuth,
+} from "@clerk/clerk-react";
+import type { UserResource } from "@clerk/types";
+import { useRouter } from "next/navigation";
+import { supabase } from "@/lib/supabase";
 
-type UserProfile = Database["public"]["Tables"]["users"]["Row"];
-
-interface AuthContextType {
-  user: User | null;
-  profile: UserProfile | null;
-  session: Session | null;
-  loading: boolean;
-  signUp: (
-    email: string,
-    password: string,
-    userData: {
-      first_name: string;
-      last_name: string;
-      voterId: string;
-      role: "voter" | "admin";
-    },
-  ) => Promise<{ error: any }>;
-  signIn: (email: string, password: string) => Promise<{ error: any }>;
-  signOut: () => Promise<void>;
-  isAdmin: boolean;
+interface Profile {
+  id: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+  voter_id: string;
+  role: "admin" | "voter";
+  is_verified: boolean;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+interface AuthContextProps {
+  user: UserResource | null;
+  profile: Profile | null;
+  isLoaded: boolean;
+  isSignedIn: boolean;
+  signOut: () => Promise<void>;
+  getToken: () => Promise<string | null>;
+}
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
-  const [loading, setLoading] = useState(true);
+const AuthContext = createContext<AuthContextProps | undefined>(undefined);
 
-  const createDemoProfile = (
-    role: "admin" | "voter" = "admin",
-  ): UserProfile => ({
-    id: "demo-user-id",
-    email: "demo@jaytec.com",
-    voter_id: "DEMO001",
-    first_name: "Demo",
-    last_name: "User",
-    role,
-    is_verified: true,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  });
+export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
+  const { user, isLoaded, isSignedIn } = useUser();
+  const { signOut: clerkSignOut, getToken: clerkGetToken } = useClerkAuth();
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const router = useRouter();
 
   useEffect(() => {
-    if (!hasValidCredentials) {
-      console.log("🎭 Running in demo mode.");
-      setLoading(false);
-      return;
-    }
-
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      if (session?.user) fetchUserProfile(session.user.id);
-      else setLoading(false);
-    });
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      if (session?.user) await fetchUserProfile(session.user.id);
-      else {
+    const fetchProfile = async () => {
+      if (!user) {
         setProfile(null);
-        setLoading(false);
+        return;
       }
-    });
 
-    return () => subscription.unsubscribe();
-  }, []);
+      try {
+        // Get the user's token for Supabase auth
+        const token = await clerkGetToken({ template: "supabase" });
+        
+        // Set up Supabase session with the token
+        const { data, error } = await supabase.auth.setSession({
+          access_token: token,
+          refresh_token: "",
+        });
 
-  const fetchUserProfile = async (userId: string) => {
+        if (error) throw error;
+
+        // Fetch user profile from Supabase
+        const { data: profileData, error: profileError } = await supabase
+          .from("profiles")
+          .select("*")
+          .eq("user_id", user.id)
+          .single();
+
+        if (profileError) throw profileError;
+
+        setProfile(profileData);
+      } catch (error) {
+        console.error("Error fetching profile:", error);
+        setProfile(null);
+      }
+    };
+
+    fetchProfile();
+  }, [user, clerkGetToken]);
+
+  const getToken = async () => {
+    if (!user) return null;
+    return await clerkGetToken({ template: "supabase" });
+  };
+
+  const handleSignOut = async () => {
     try {
-      const { data, error } = await supabase
-        .from("users")
-        .select("*")
-        .eq("id", userId)
-        .single();
-
-      if (error) throw error;
-      setProfile(data);
+      await clerkSignOut();
+      await supabase.auth.signOut();
+      router.push("/login");
     } catch (err) {
-      console.error("❌ Error fetching user profile:", err);
-    } finally {
-      setLoading(false);
+      console.error("Logout failed:", err);
     }
   };
 
-  const signUp = async (
-    email: string,
-    password: string,
-    {
-      first_name,
-      last_name,
-      voterId,
-      role = "voter",
-    }: {
-      first_name: string;
-      last_name: string;
-      voterId: string;
-      role: "voter" | "admin";
-    },
-  ) => {
-    const { data, error: signUpError } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          first_name,
-          last_name,
-          voter_id: voterId,
-          role,
-          is_verified: false,
-        },
-      },
-    });
+  return (
+    <AuthContext.Provider
+      value={{
+        user,
+        profile,
+        isLoaded,
+        isSignedIn,
+        signOut: handleSignOut,
+        getToken,
+      }}
+    >
+      {children}
+    </AuthContext.Provider>
+  );
+};
 
-    if (signUpError) {
-      console.error("❌ Supabase Auth SignUp Error:", signUpError);
-      return { error: signUpError };
-    }
-
-    const userId = data.user?.id;
-
-    if (userId) {
-      const { error: rpcError } = await supabase.rpc("create_user_profile", {
-        _id: userId,
-        _email: email,
-        _first_name: first_name,
-        _last_name: last_name,
-        _voter_id: voterId,
-        _role: role,
-        _is_verified: false,
-      });
-
-      if (rpcError) {
-        console.error("❌ RPC profile creation error:", rpcError);
-        return { error: rpcError };
-      }
-    }
-
-    return { error: null };
-  };
-
-  const signIn = async (email: string, password: string) => {
-    if (!hasValidCredentials) {
-      const role = email.includes("admin") ? "admin" : "voter";
-      setProfile(createDemoProfile(role));
-      setUser({ email } as User);
-      return { error: null };
-    }
-
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-
-    if (error) console.error("❌ Sign in error:", error);
-    return { error };
-  };
-
-  const signOut = async () => {
-    if (!hasValidCredentials) {
-      setUser(null);
-      setProfile(null);
-      return;
-    }
-
-    await supabase.auth.signOut();
-    setUser(null);
-    setProfile(null);
-  };
-
-  const isAdmin = profile?.role === "admin";
-
-  const value: AuthContextType = {
-    user,
-    profile,
-    session,
-    loading,
-    signUp,
-    signIn,
-    signOut,
-    isAdmin,
-  };
-
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
-}
-
-export function useAuth() {
+export const useAuth = () => {
   const context = useContext(AuthContext);
-  if (context === undefined) {
+  if (!context) {
     throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
-}
+};

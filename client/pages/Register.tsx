@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { useSignUp } from "@clerk/clerk-react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -12,10 +14,10 @@ import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Vote, Loader2, CheckCircle } from "lucide-react";
 import { Link } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
-import { hasValidCredentials } from "@/lib/supabase";
+import { supabase } from "@/lib/supabase";
 
 export default function Register() {
+  const { isLoaded, signUp } = useSignUp();
   const [formData, setFormData] = useState({
     first_name: "",
     last_name: "",
@@ -24,47 +26,66 @@ export default function Register() {
     password: "",
     confirmPassword: "",
   });
-
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
-  const { signUp } = useAuth();
+  const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    setSuccess(false);
 
-    if (
-      !formData.first_name ||
-      !formData.last_name ||
-      !formData.voter_id ||
-      !formData.email ||
-      !formData.password
-    ) {
+    const { first_name, last_name, email, voter_id, password, confirmPassword } = formData;
+
+    if (!first_name || !last_name || !voter_id || !email || !password) {
       setError("All fields are required.");
       return;
     }
 
-    if (formData.password !== formData.confirmPassword) {
+    if (password !== confirmPassword) {
       setError("Passwords do not match.");
       return;
     }
 
+    if (!isLoaded) return;
+
     setLoading(true);
-    const { error } = await signUp(formData.email, formData.password, {
-      first_name: formData.first_name,
-      last_name: formData.last_name,
-      voterId: formData.voter_id,
-      role: "voter",
-    });
 
-    if (error) {
-      setError(error.message || "An error occurred during registration.");
-    } else {
+    try {
+      // Create user in Clerk
+      const result = await signUp.create({
+        emailAddress: email,
+        password,
+      });
+
+      // Prepare email verification
+      await signUp.prepareEmailAddressVerification({
+        strategy: "email_code",
+      });
+
+      // Create profile in Supabase after email verification
+      const token = await result.createdSessionId;
+      const { data, error: supabaseError } = await supabase
+        .from("profiles")
+        .insert({
+          user_id: result.createdUserId,
+          first_name,
+          last_name,
+          email,
+          voter_id,
+          role: "voter",
+          is_verified: false,
+        });
+
+      if (supabaseError) throw supabaseError;
+
       setSuccess(true);
+    } catch (err: any) {
+      setError(err.errors?.[0]?.message || "Registration failed.");
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
   };
 
   const handleInputChange = (field: string, value: string) => {
@@ -81,9 +102,7 @@ export default function Register() {
             </div>
             <CardTitle className="text-2xl">Account Created!</CardTitle>
             <CardDescription>
-              {hasValidCredentials
-                ? "Please check your email to verify your account before signing in."
-                : "Demo account created successfully! You can now sign in with demo credentials."}
+              Please check your email to verify your account before signing in.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -201,7 +220,7 @@ export default function Register() {
               Sign in
             </Link>
           </div>
-        </CardContent> 
+        </CardContent>
       </Card>
     </div>
   );
