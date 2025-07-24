@@ -15,6 +15,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Vote, Loader2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { DemoLogin } from "@/components/DemoLogin";
+import { useAuth } from "@/contexts/AuthContext"; // Import useAuth instead of Profile
 
 export default function Login() {
   const { isLoaded, signIn, setActive } = useSignIn();
@@ -23,6 +24,7 @@ export default function Login() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const { profile } = useAuth(); // Get profile from auth context
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -39,7 +41,7 @@ export default function Login() {
 
       if (result.status === "complete") {
         await setActive({ session: result.createdSessionId });
-        navigate("/");
+        navigate(profile?.role === "admin" ? "/admin" : "/voter"); // Use profile from context
       } else {
         setError("Additional steps required. Please check your email.");
       }

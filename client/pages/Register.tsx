@@ -43,6 +43,11 @@ export default function Register() {
       return;
     }
 
+    if (password.length < 8) {
+      setError('Password must be at least 8 characters');
+      return;
+    }
+
     if (password !== confirmPassword) {
       setError("Passwords do not match.");
       return;
@@ -53,20 +58,17 @@ export default function Register() {
     setLoading(true);
 
     try {
-      // Create user in Clerk
       const result = await signUp.create({
         emailAddress: email,
         password,
       });
 
-      // Prepare email verification
       await signUp.prepareEmailAddressVerification({
         strategy: "email_code",
       });
 
-      // Create profile in Supabase after email verification
       const token = await result.createdSessionId;
-      const { data, error: supabaseError } = await supabase
+      const { error: supabaseError } = await supabase
         .from("profiles")
         .insert({
           user_id: result.createdUserId,
@@ -79,7 +81,6 @@ export default function Register() {
         });
 
       if (supabaseError) throw supabaseError;
-
       setSuccess(true);
     } catch (err: any) {
       setError(err.errors?.[0]?.message || "Registration failed.");
@@ -106,9 +107,9 @@ export default function Register() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Link to="/login">
-              <Button className="w-full">Go to Login</Button>
-            </Link>
+            <Button onClick={() => navigate("/login")} className="w-full">
+              Go to Login
+            </Button>
           </CardContent>
         </Card>
       </div>
@@ -143,9 +144,7 @@ export default function Register() {
                   id="first_name"
                   placeholder="John"
                   value={formData.first_name}
-                  onChange={(e) =>
-                    handleInputChange("first_name", e.target.value)
-                  }
+                  onChange={(e) => handleInputChange("first_name", e.target.value)}
                   required
                 />
               </div>
@@ -155,9 +154,7 @@ export default function Register() {
                   id="last_name"
                   placeholder="Doe"
                   value={formData.last_name}
-                  onChange={(e) =>
-                    handleInputChange("last_name", e.target.value)
-                  }
+                  onChange={(e) => handleInputChange("last_name", e.target.value)}
                   required
                 />
               </div>
@@ -179,9 +176,7 @@ export default function Register() {
                 id="voter_id"
                 placeholder="Enter your voter ID"
                 value={formData.voter_id}
-                onChange={(e) =>
-                  handleInputChange("voter_id", e.target.value)
-                }
+                onChange={(e) => handleInputChange("voter_id", e.target.value)}
                 required
               />
             </div>
@@ -191,9 +186,7 @@ export default function Register() {
                 id="password"
                 type="password"
                 value={formData.password}
-                onChange={(e) =>
-                  handleInputChange("password", e.target.value)
-                }
+                onChange={(e) => handleInputChange("password", e.target.value)}
                 required
               />
             </div>
@@ -203,9 +196,7 @@ export default function Register() {
                 id="confirmPassword"
                 type="password"
                 value={formData.confirmPassword}
-                onChange={(e) =>
-                  handleInputChange("confirmPassword", e.target.value)
-                }
+                onChange={(e) => handleInputChange("confirmPassword", e.target.value)}
                 required
               />
             </div>

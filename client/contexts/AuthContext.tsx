@@ -1,15 +1,12 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useState } from "react";
-import {
-  useUser,
-  useAuth as useClerkAuth,
-} from "@clerk/clerk-react";
+import { useUser, useAuth as useClerkAuth } from "@clerk/clerk-react";
 import type { UserResource } from "@clerk/types";
-import { useRouter } from "next/navigation";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
 
-interface Profile {
+export interface Profile {
   id: string;
   first_name: string;
   last_name: string;
@@ -34,7 +31,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const { user, isLoaded, isSignedIn } = useUser();
   const { signOut: clerkSignOut, getToken: clerkGetToken } = useClerkAuth();
   const [profile, setProfile] = useState<Profile | null>(null);
-  const router = useRouter();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -44,18 +41,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
 
       try {
-        // Get the user's token for Supabase auth
         const token = await clerkGetToken({ template: "supabase" });
-        
-        // Set up Supabase session with the token
-        const { data, error } = await supabase.auth.setSession({
-          access_token: token,
+        const { error } = await supabase.auth.setSession({
+          access_token: token || '',
           refresh_token: "",
         });
 
         if (error) throw error;
 
-        // Fetch user profile from Supabase
         const { data: profileData, error: profileError } = await supabase
           .from("profiles")
           .select("*")
@@ -63,7 +56,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           .single();
 
         if (profileError) throw profileError;
-
         setProfile(profileData);
       } catch (error) {
         console.error("Error fetching profile:", error);
@@ -83,7 +75,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     try {
       await clerkSignOut();
       await supabase.auth.signOut();
-      router.push("/login");
+      navigate("/login");
     } catch (err) {
       console.error("Logout failed:", err);
     }
