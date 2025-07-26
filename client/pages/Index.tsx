@@ -17,12 +17,11 @@ import {
   Zap,
 } from "lucide-react";
 import { Link } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
-import { DemoNotice } from "@/components/DemoNotice";
+import { useAuth } from "@/contexts/ClerkAuthContext";
 import { DemoSlider } from "@/components/DemoSlider";
 
 export default function Index() {
-  const { user, profile, signOut } = useAuth();
+  const { isSignedIn, profile, signOut } = useAuth();
 
   const features = [
     {
@@ -77,7 +76,7 @@ export default function Index() {
               <Link to="/results">
                 <Button variant="ghost">Results</Button>
               </Link>
-              {user ? (
+              {isSignedIn ? (
                 <>
                   <span className="text-sm text-gray-600">
                     Welcome, {profile?.first_name}
@@ -103,11 +102,6 @@ export default function Index() {
           </div>
         </div>
       </nav>
-
-      {/* Demo Notice */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4">
-        <DemoNotice />
-      </div>
 
       {/* Hero Section */}
       <section className="relative overflow-hidden py-20 lg:py-32">

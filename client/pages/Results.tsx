@@ -16,7 +16,6 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
-  Legend,
   ResponsiveContainer,
   PieChart,
   Pie,
@@ -26,14 +25,12 @@ import {
   Vote,
   BarChart3,
   Users,
+  TrendingUp,
   Clock,
   RefreshCw,
-  Award,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { Database } from "@shared/database.types";
-import { useAuth } from "@/contexts/AuthContext";
-import { DemoNotice } from "@/components/DemoNotice";
 
 type Election = Database["public"]["Tables"]["elections"]["Row"];
 type Position = Database["public"]["Tables"]["positions"]["Row"];
@@ -43,34 +40,23 @@ interface ElectionResults extends Election {
   positions: (Position & {
     candidates: (Candidate & {
       percentage: number;
-      isWinner: boolean;
     })[];
     totalVotes: number;
   })[];
   totalVotes: number;
 }
 
-const COLORS = [
-  "#8b5cf6", "#06b6d4", "#10b981", "#f59e0b", "#ef4444",
-  "#6366f1", "#ec4899", "#14b8a6", "#f97316", "#64748b"
-];
+const COLORS = ["#8b5cf6", "#06b6d4", "#10b981", "#f59e0b", "#ef4444"];
 
 export default function Results() {
-  const { getToken } = useAuth();
   const [elections, setElections] = useState<ElectionResults[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
-    const initialize = async () => {
-      const token = await getToken();
-      if (token) {
-        fetchResults();
-      }
-    };
-    initialize();
-
-    const interval = setInterval(fetchResults, 30000);
+    fetchResults();
+    // Set up real-time updates
+    const interval = setInterval(fetchResults, 30000); // Update every 30 seconds
     return () => clearInterval(interval);
   }, []);
 
@@ -111,18 +97,17 @@ export default function Results() {
 
               const totalVotes = (candidates || []).reduce(
                 (sum, candidate) => sum + candidate.vote_count,
-                0
+                0,
               );
 
               const candidatesWithPercentage = (candidates || []).map(
-                (candidate, index) => ({
+                (candidate) => ({
                   ...candidate,
                   percentage:
                     totalVotes > 0
                       ? Math.round((candidate.vote_count / totalVotes) * 100)
                       : 0,
-                  isWinner: index === 0 // Mark the first candidate as winner (sorted by vote_count)
-                })
+                }),
               );
 
               return {
@@ -130,12 +115,12 @@ export default function Results() {
                 candidates: candidatesWithPercentage,
                 totalVotes,
               };
-            })
+            }),
           );
 
           const electionTotalVotes = positionsWithResults.reduce(
             (sum, position) => sum + position.totalVotes,
-            0
+            0,
           );
 
           return {
@@ -143,7 +128,7 @@ export default function Results() {
             positions: positionsWithResults,
             totalVotes: electionTotalVotes,
           };
-        })
+        }),
       );
 
       setElections(resultsData);
@@ -169,6 +154,7 @@ export default function Results() {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* Navigation */}
       <nav className="bg-white border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
@@ -195,9 +181,7 @@ export default function Results() {
         </div>
       </nav>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <DemoNotice />
-
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900">Election Results</h1>
           <p className="text-gray-600 mt-2">
@@ -213,7 +197,8 @@ export default function Results() {
                 No Published Results
               </h3>
               <p className="text-gray-600">
-                Election results will appear here once published by administrators.
+                Election results will appear here once published by
+                administrators.
               </p>
             </CardContent>
           </Card>
@@ -259,25 +244,21 @@ export default function Results() {
                             <h4 className="text-lg font-medium mb-4">
                               Vote Distribution
                             </h4>
-                            <ResponsiveContainer width="100%" height={400}>
-                              <BarChart
-                                data={position.candidates}
-                                margin={{ top: 20, right: 30, left: 20, bottom: 80 }}
-                              >
+                            <ResponsiveContainer width="100%" height={300}>
+                              <BarChart data={position.candidates}>
                                 <CartesianGrid strokeDasharray="3 3" />
                                 <XAxis
                                   dataKey="name"
+                                  tick={{ fontSize: 12 }}
+                                  interval={0}
                                   angle={-45}
                                   textAnchor="end"
                                   height={80}
-                                  tick={{ fontSize: 12 }}
                                 />
                                 <YAxis />
                                 <Tooltip />
-                                <Legend />
                                 <Bar
                                   dataKey="vote_count"
-                                  name="Votes"
                                   fill="#8b5cf6"
                                   radius={[4, 4, 0, 0]}
                                 />
@@ -288,20 +269,21 @@ export default function Results() {
                           {/* Pie Chart */}
                           <div>
                             <h4 className="text-lg font-medium mb-4">
-                              Vote Percentage
+                              Percentage Breakdown
                             </h4>
-                            <ResponsiveContainer width="100%" height={400}>
+                            <ResponsiveContainer width="100%" height={300}>
                               <PieChart>
                                 <Pie
                                   data={position.candidates}
                                   cx="50%"
                                   cy="50%"
                                   labelLine={false}
-                                  label={({ name, percentage }) => `${name}: ${percentage}%`}
-                                  outerRadius={120}
-                                  innerRadius={60}
-                                  paddingAngle={5}
-                                  dataKey="percentage"
+                                  label={({ name, percentage }) =>
+                                    `${name}: ${percentage}%`
+                                  }
+                                  outerRadius={100}
+                                  fill="#8884d8"
+                                  dataKey="vote_count"
                                 >
                                   {position.candidates.map((entry, index) => (
                                     <Cell
@@ -310,38 +292,30 @@ export default function Results() {
                                     />
                                   ))}
                                 </Pie>
-                                <Tooltip 
-                                  formatter={(value) => [`${value}%`, "Percentage"]}
-                                />
-                                <Legend />
+                                <Tooltip />
                               </PieChart>
                             </ResponsiveContainer>
                           </div>
                         </div>
 
                         {/* Detailed Results */}
-                        <div className="mt-8">
+                        <div className="mt-6">
                           <h4 className="text-lg font-medium mb-4">
-                            Candidate Results
+                            Detailed Results
                           </h4>
                           <div className="space-y-4">
                             {position.candidates.map((candidate, index) => (
                               <div
                                 key={candidate.id}
-                                className={`flex items-center justify-between p-4 rounded-lg border ${
-                                  candidate.isWinner ? "bg-primary/10 border-primary" : "bg-white"
-                                }`}
+                                className="flex items-center justify-between p-4 bg-white rounded-lg border"
                               >
                                 <div className="flex items-center space-x-4">
                                   <div className="flex items-center space-x-2">
                                     <div className="text-lg font-bold text-gray-500">
                                       #{index + 1}
                                     </div>
-                                    {candidate.isWinner && (
-                                      <Badge variant="default" className="flex items-center">
-                                        <Award className="w-3 h-3 mr-1" />
-                                        Winner
-                                      </Badge>
+                                    {index === 0 && (
+                                      <Badge variant="default">Winner</Badge>
                                     )}
                                   </div>
                                   <div>
@@ -356,18 +330,18 @@ export default function Results() {
                                   </div>
                                 </div>
                                 <div className="flex items-center space-x-4">
-                                  <div className="text-right min-w-[100px]">
+                                  <div className="text-right">
                                     <div className="font-semibold">
-                                      {candidate.vote_count.toLocaleString()} votes
+                                      {candidate.vote_count} votes
                                     </div>
                                     <div className="text-sm text-gray-600">
                                       {candidate.percentage}%
                                     </div>
                                   </div>
                                   <div className="w-32">
-                                    <Progress 
-                                    value={candidate.percentage} 
-                                    className={`h-2 ${candidate.isWinner ? "bg-primary" : "bg-gray-400"}`} 
+                                    <Progress
+                                      value={candidate.percentage}
+                                      className="h-2"
                                     />
                                   </div>
                                 </div>
@@ -384,6 +358,7 @@ export default function Results() {
           </div>
         )}
 
+        {/* Last Updated */}
         <div className="mt-8 text-center text-sm text-gray-500">
           <Clock className="w-4 h-4 inline mr-1" />
           Results update automatically every 30 seconds

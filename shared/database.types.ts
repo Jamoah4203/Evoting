@@ -6,13 +6,12 @@ export type Json =
   | { [key: string]: Json | undefined }
   | Json[];
 
-// database.types.ts (Supabase-generated)
 export interface Database {
   public: {
     Tables: {
-      profiles: {
+      users: {
         Row: {
-          id: string; // Clerk user ID (UUID)
+          id: string;
           email: string;
           voter_id: string;
           first_name: string;
@@ -34,12 +33,14 @@ export interface Database {
           updated_at?: string;
         };
         Update: {
+          id?: string;
           email?: string;
           voter_id?: string;
           first_name?: string;
           last_name?: string;
           role?: "voter" | "admin";
           is_verified?: boolean;
+          created_at?: string;
           updated_at?: string;
         };
       };

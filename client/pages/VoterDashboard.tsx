@@ -19,12 +19,10 @@ import {
   AlertCircle,
   User,
 } from "lucide-react";
-import { useAuth } from "@/contexts/AuthContext";
-import { supabase, hasValidCredentials } from "@/lib/supabase";
+import { useAuth } from "@/contexts/ClerkAuthContext";
+import { supabase } from "@/lib/supabase";
 import { Database } from "@shared/database.types";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
-import { getDemoData } from "@/lib/demo-data";
-import { DemoNotice } from "@/components/DemoNotice";
 
 type Election = Database["public"]["Tables"]["elections"]["Row"];
 type Position = Database["public"]["Tables"]["positions"]["Row"];
@@ -60,34 +58,8 @@ function VoterDashboardContent() {
     fetchUserVotes();
   }, [profile]);
 
-  const fetchActiveElections = async () => {
+    const fetchActiveElections = async () => {
     try {
-      if (!hasValidCredentials) {
-        // Use demo data
-        const demoData = getDemoData();
-        const activeElections = demoData.elections.filter((e) => e.is_active);
-
-        const electionsWithPositions = activeElections.map((election) => {
-          const positions = demoData.positions
-            .filter((p) => p.election_id === election.id)
-            .map((position) => ({
-              ...position,
-              candidates: demoData.candidates.filter(
-                (c) => c.position_id === position.id,
-              ),
-            }));
-
-          return {
-            ...election,
-            positions,
-          };
-        });
-
-        setElections(electionsWithPositions);
-        setLoading(false);
-        return;
-      }
-
       const { data: electionsData, error: electionsError } = await supabase
         .from("elections")
         .select("*")
@@ -137,25 +109,10 @@ function VoterDashboardContent() {
     }
   };
 
-  const fetchUserVotes = async () => {
+    const fetchUserVotes = async () => {
     if (!profile?.id) return;
 
     try {
-      if (!hasValidCredentials) {
-        // Demo mode - simulate some votes
-        setUserVotes([
-          {
-            id: "demo-vote-1",
-            user_id: profile.id,
-            candidate_id: "demo-candidate-1",
-            position_id: "demo-position-1",
-            election_id: "demo-election-1",
-            created_at: new Date().toISOString(),
-          },
-        ]);
-        return;
-      }
-
       const { data, error } = await supabase
         .from("votes")
         .select("*")
@@ -172,22 +129,12 @@ function VoterDashboardContent() {
     return userVotes.some((vote) => vote.position_id === positionId);
   };
 
-  const submitVotes = async (electionId: string) => {
+    const submitVotes = async (electionId: string) => {
     if (!profile?.id) return;
 
     setSubmitting(true);
 
     try {
-      if (!hasValidCredentials) {
-        // Demo mode - simulate vote submission
-        console.log("Demo mode: Votes would be submitted:", selectedCandidates);
-        await new Promise((resolve) => setTimeout(resolve, 1000)); // Simulate network delay
-        await fetchUserVotes();
-        setSelectedCandidates({});
-        setSubmitting(false);
-        return;
-      }
-
       const election = elections.find((e) => e.id === electionId);
       if (!election) return;
 
@@ -269,9 +216,7 @@ function VoterDashboardContent() {
         </div>
       </nav>
 
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <DemoNotice />
-
+            <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900">Voting Portal</h1>
           <p className="text-gray-600 mt-2">

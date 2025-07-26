@@ -1,4 +1,4 @@
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/ClerkAuthContext";
 import { Navigate } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 
@@ -11,7 +11,7 @@ export function ProtectedRoute({
   children,
   requireAdmin = false,
 }: ProtectedRouteProps) {
-  const { user, profile, loading } = useAuth();
+  const { isSignedIn, profile, loading } = useAuth();
 
   if (loading) {
     return (
@@ -21,11 +21,23 @@ export function ProtectedRoute({
     );
   }
 
-  if (!user) {
+  if (!isSignedIn) {
     return <Navigate to="/login" replace />;
   }
 
-  if (requireAdmin && profile?.role !== "admin") {
+  // If profile is not yet loaded from Supabase, show loading
+  if (!profile) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4" />
+          <p className="text-gray-600">Setting up your account...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (requireAdmin && profile.role !== "admin") {
     return <Navigate to="/voter" replace />;
   }
 

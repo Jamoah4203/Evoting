@@ -31,20 +31,22 @@ import {
   Vote,
   Users,
   BarChart3,
+  Settings,
   Plus,
   Play,
   Pause,
   Eye,
   EyeOff,
+  Calendar,
+  Edit,
+  Trash2,
   UserCheck,
   UserX,
-  Calendar,
 } from "lucide-react";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/ClerkAuthContext";
 import { supabase } from "@/lib/supabase";
 import { Database } from "@shared/database.types";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
-import { DemoNotice } from "@/components/DemoNotice";
 
 type Election = Database["public"]["Tables"]["elections"]["Row"];
 type User = Database["public"]["Tables"]["users"]["Row"];
@@ -75,7 +77,7 @@ function AdminDashboardContent() {
     fetchUsers();
   }, []);
 
-  const fetchElections = async () => {
+    const fetchElections = async () => {
     try {
       const { data, error } = await supabase
         .from("elections")
@@ -89,7 +91,7 @@ function AdminDashboardContent() {
     }
   };
 
-  const fetchUsers = async () => {
+    const fetchUsers = async () => {
     try {
       const { data, error } = await supabase.from("users").select("*");
 
@@ -102,7 +104,7 @@ function AdminDashboardContent() {
     }
   };
 
-  const createElection = async () => {
+    const createElection = async () => {
     try {
       const { error } = await supabase.from("elections").insert({
         title: newElection.title,
@@ -127,7 +129,10 @@ function AdminDashboardContent() {
     }
   };
 
-  const toggleElectionStatus = async (electionId: string, isActive: boolean) => {
+    const toggleElectionStatus = async (
+    electionId: string,
+    isActive: boolean,
+  ) => {
     try {
       const { error } = await supabase
         .from("elections")
@@ -141,9 +146,9 @@ function AdminDashboardContent() {
     }
   };
 
-  const toggleResultsPublication = async (
+    const toggleResultsPublication = async (
     electionId: string,
-    isPublished: boolean
+    isPublished: boolean,
   ) => {
     try {
       const { error } = await supabase
@@ -158,7 +163,7 @@ function AdminDashboardContent() {
     }
   };
 
-  const verifyUser = async (userId: string, isVerified: boolean) => {
+    const verifyUser = async (userId: string, isVerified: boolean) => {
     try {
       const { error } = await supabase
         .from("users")
@@ -234,9 +239,7 @@ function AdminDashboardContent() {
         </div>
       </nav>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <DemoNotice />
-
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="flex justify-between items-center mb-8">
           <div>
@@ -427,13 +430,11 @@ function AdminDashboardContent() {
         </Card>
 
         {/* User Management */}
-        <Card>
+                <Card>
           <CardHeader>
             <CardTitle>User Management</CardTitle>
             <CardDescription>
-              Verify voters and manage user accounts. All users are
-              automatically assigned as voters. Admin roles must be manually
-              assigned by administrators.
+              Verify voters and manage user accounts. All users are automatically assigned as voters. Admin roles must be manually assigned by administrators.
             </CardDescription>
           </CardHeader>
           <CardContent>
