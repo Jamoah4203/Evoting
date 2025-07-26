@@ -1,10 +1,11 @@
 {
+  "version": 2,
   "buildCommand": "npm run build",
   "installCommand": "npm install",
   "outputDirectory": "dist/spa",
   "functions": {
     "api/**/*.ts": {
-      "runtime": "vercel/node@18.x"
+      "runtime": "vercel/node@18.20.0"
     }
   },
   "rewrites": [
