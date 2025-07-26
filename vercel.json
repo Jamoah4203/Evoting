@@ -1,16 +1,16 @@
 {
   "buildCommand": "npm run build",
-  "outputDirectory": "dist/spa",
   "installCommand": "npm install",
+  "outputDirectory": "dist/spa",
   "functions": {
-    "server/index.ts": {
-      "runtime": "nodejs18.x"
+    "api/**/*.ts": {
+      "runtime": "@vercel/node"
     }
   },
   "rewrites": [
     {
       "source": "/api/(.*)",
-      "destination": "/server/index.ts"
+      "destination": "/api/$1"
     },
     {
       "source": "/(.*)",
