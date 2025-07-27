@@ -3,11 +3,11 @@
   "builds": [
     {
       "src": "api/**/*.ts",
-      "use": "@vercel/node@20.x"
+      "use": "@vercel/node"
     },
     {
       "src": "client/**",
-      "use": "@vercel/static-build@latest"
+      "use": "@vercel/static-build"
     }
   ],
   "routes": [
