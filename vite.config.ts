@@ -3,15 +3,15 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
 
-// https://vitejs.dev/config/
 export default defineConfig({
-  root: "client", // your Vite app root
+  root: "client", // Vite root is client/
+  base: "./",     // ✅ tells Vite to use relative paths in index.html
   server: {
     host: "::",
     port: 8080,
   },
   build: {
-    outDir: "../dist/spa", // match your /dist/spa from vercel.json
+    outDir: "../dist/spa", // matches vercel.json
     emptyOutDir: true,
   },
   plugins: [react()],
