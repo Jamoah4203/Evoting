@@ -4,17 +4,17 @@ import react from "@vitejs/plugin-react-swc";
 import path from "path";
 
 export default defineConfig({
-  root: "client", // Vite root is client/
-  base: "./",     // ✅ tells Vite to use relative paths in index.html
-  publicDir: "client/public", // Add this for static assets
+  root: "client", // app entry lives in client/
+  base: "./", // use relative paths for Vercel static hosting
+  publicDir: "../public", // public folder is one level up from client
   server: {
     host: "::",
     port: 8080,
   },
   build: {
-    outDir: "../dist/spa", // matches vercel.json
+    outDir: "../dist/spa", // built output goes here (served by Vercel)
     emptyOutDir: true,
-    assetsDir: "assets", // Better asset organization
+    assetsDir: "assets", // keep static assets clean
   },
   plugins: [react()],
   resolve: {
@@ -23,7 +23,8 @@ export default defineConfig({
       "@components": path.resolve(__dirname, "./client/components"),
       "@context": path.resolve(__dirname, "./client/context"),
       "@pages": path.resolve(__dirname, "./client/pages"),
-      "@lib": path.resolve(__dirname, "./lib"),
+      "@lib": path.resolve(__dirname, "./client/lib"),
+      "@shared": path.resolve(__dirname, "./shared"),
     },
   },
 });

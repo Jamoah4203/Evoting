@@ -17,6 +17,9 @@
     "allowSyntheticDefaultImports": true,
     "forceConsistentCasingInFileNames": true,
 
+    /* 👇 Add this line */
+    "types": ["node"],
+
     /* Linting */
     "strict": false,
     "noUnusedLocals": false,
