@@ -11,7 +11,7 @@ export function ProtectedRoute({
   children,
   requireAdmin = false,
 }: ProtectedRouteProps) {
-  const { isSignedIn, profile, loading } = useAuth();
+  const { isSignedIn, isEmailVerified, profile, loading } = useAuth();
 
   if (loading) {
     return (
@@ -23,6 +23,10 @@ export function ProtectedRoute({
 
   if (!isSignedIn) {
     return <Navigate to="/login" replace />;
+  }
+
+  if (!isEmailVerified) {
+    return <Navigate to="/verify-email" replace />;
   }
 
   // If profile is not yet loaded from Supabase, show loading

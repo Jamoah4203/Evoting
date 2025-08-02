@@ -17,9 +17,6 @@
     "allowSyntheticDefaultImports": true,
     "forceConsistentCasingInFileNames": true,
 
-    /* 👇 Add this line */
-    "types": ["node"],
-
     /* Linting */
     "strict": false,
     "noUnusedLocals": false,
@@ -37,7 +34,7 @@
   },
   "include": [
     "client/**/*",
-    "api/**/*",
+    "server/**/*",
     "shared/**/*",
     "vite.config.ts",
     "vite.config.server.ts"

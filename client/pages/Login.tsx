@@ -5,15 +5,19 @@ import { Vote } from "lucide-react";
 import { Link } from "react-router-dom";
 
 export default function Login() {
-  const { isSignedIn, user } = useUser();
+  const { isSignedIn, user, isLoaded } = useUser();
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (isSignedIn && user) {
-      // Redirect based on user role (we'll get this from Supabase profile)
-      navigate("/voter"); // Default to voter, admin check will happen in protected route
+    if (isLoaded && isSignedIn && user) {
+      const emailVerified = user.emailAddresses[0]?.verification?.status === "verified";
+      if (emailVerified) {
+        navigate("/voter"); // Will redirect to admin if user is admin
+      } else {
+        navigate("/verify-email");
+      }
     }
-  }, [isSignedIn, user, navigate]);
+  }, [isLoaded, isSignedIn, user, navigate]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">

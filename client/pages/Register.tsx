@@ -5,14 +5,19 @@ import { Vote } from "lucide-react";
 import { Link } from "react-router-dom";
 
 export default function Register() {
-  const { isSignedIn, user } = useUser();
+  const { isSignedIn, user, isLoaded } = useUser();
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (isSignedIn && user) {
-      navigate("/voter");
+    if (isLoaded && isSignedIn && user) {
+      const emailVerified = user.emailAddresses[0]?.verification?.status === "verified";
+      if (emailVerified) {
+        navigate("/voter");
+      } else {
+        navigate("/verify-email");
+      }
     }
-  }, [isSignedIn, user, navigate]);
+  }, [isLoaded, isSignedIn, user, navigate]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">

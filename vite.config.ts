@@ -1,30 +1,35 @@
-// vite.config.ts
-import { defineConfig } from "vite";
+import { defineConfig, Plugin } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
+import { createServer } from "./server";
 
-export default defineConfig({
-  root: "client", // app entry lives in client/
-  base: "./", // use relative paths for Vercel static hosting
-  publicDir: "../public", // public folder is one level up from client
+// https://vitejs.dev/config/
+export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
     port: 8080,
   },
   build: {
-    outDir: "../dist/spa", // built output goes here (served by Vercel)
-    emptyOutDir: true,
-    assetsDir: "assets", // keep static assets clean
+    outDir: "dist/spa",
   },
-  plugins: [react()],
+  plugins: [react(), expressPlugin()],
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./client"),
-      "@components": path.resolve(__dirname, "./client/components"),
-      "@context": path.resolve(__dirname, "./client/context"),
-      "@pages": path.resolve(__dirname, "./client/pages"),
-      "@lib": path.resolve(__dirname, "./client/lib"),
       "@shared": path.resolve(__dirname, "./shared"),
     },
   },
-});
+}));
+
+function expressPlugin(): Plugin {
+  return {
+    name: "express-plugin",
+    apply: "serve", // Only apply during development (serve mode)
+    configureServer(server) {
+      const app = createServer();
+
+      // Add Express app as middleware to Vite dev server
+      server.middlewares.use(app);
+    },
+  };
+}

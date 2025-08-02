@@ -10,6 +10,7 @@ interface AuthContextType {
   profile: UserProfile | null;
   loading: boolean;
   isSignedIn: boolean;
+  isEmailVerified: boolean;
   isAdmin: boolean;
   signOut: () => Promise<void>;
 }
@@ -17,19 +18,29 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function ClerkAuthProvider({ children }: { children: React.ReactNode }) {
-  const { user, isSignedIn } = useUser();
+  const { user, isSignedIn, isLoaded } = useUser();
   const { signOut: clerkSignOut } = useClerkAuth();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (isSignedIn && user) {
-      fetchUserProfile(user.id);
-    } else {
-      setProfile(null);
-      setLoading(false);
+    if (isLoaded) {
+      if (isSignedIn && user) {
+        // Check if email is verified
+        const emailVerified = user.emailAddresses[0]?.verification?.status === "verified";
+        if (emailVerified) {
+          fetchUserProfile(user.id);
+        } else {
+          // Email not verified, profile will be null
+          setProfile(null);
+          setLoading(false);
+        }
+      } else {
+        setProfile(null);
+        setLoading(false);
+      }
     }
-  }, [isSignedIn, user]);
+  }, [isLoaded, isSignedIn, user]);
 
   const fetchUserProfile = async (userId: string) => {
     try {
@@ -59,12 +70,14 @@ export function ClerkAuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const isAdmin = profile?.role === "admin";
+  const isEmailVerified = user?.emailAddresses[0]?.verification?.status === "verified";
 
   const value: AuthContextType = {
     user,
     profile,
     loading,
     isSignedIn: isSignedIn || false,
+    isEmailVerified: isEmailVerified || false,
     isAdmin,
     signOut,
   };

@@ -221,21 +221,42 @@ VITE_FRONTEND_URL=https://your-app.vercel.app
 
 ### 3. Build Configuration
 
-Vercel should automatically detect the build settings. If needed, configure:
+Vercel automatically detects the build settings from the `vercel.json` file:
 
-- **Build Command**: `npm run build`
+- **Build Command**: `npm run build` (builds only the client)
 - **Output Directory**: `dist/spa`
+- **API Functions**: Handled by `api/[...path].ts`
 - **Install Command**: `npm install`
 
-## 🔄 Webhook Integration
+### 4. Vercel API Functions
+
+The application uses Vercel's API functions instead of a traditional server:
+
+- **Webhook endpoint**: `https://your-app.vercel.app/api/webhook/clerk`
+- **Contact form**: `https://your-app.vercel.app/api/contact`
+- **Health check**: `https://your-app.vercel.app/api/health`
+
+All API routes are handled by the `api/[...path].ts` function.
+
+## 📧 Email Verification Flow
 
 ### How It Works
 
 1. User signs up via Clerk
-2. Clerk verifies the user's email
-3. Clerk sends webhook to `/api/webhook/clerk`
-4. Webhook creates user profile in Supabase
-5. User can now access the voting platform
+2. Clerk sends verification email to user
+3. User enters verification code on `/verify-email` page
+4. Once verified, Clerk sends webhook to `/api/webhook/clerk`
+5. Webhook creates user profile in Supabase
+6. User can now access the voting platform
+
+### Verification Features
+
+- **Custom verification page**: `/verify-email` with clean UI
+- **Code resend functionality**: Users can request new verification codes
+- **Automatic redirects**: Unverified users are redirected to verification page
+- **Protected routes**: All voting features require email verification
+
+## 🔄 Webhook Integration
 
 ### Webhook Events
 
@@ -296,7 +317,7 @@ Admins can:
 - **Role-Based Access**: Admin functions are protected
 - **Data Validation**: All inputs are validated server-side
 
-## 📧 Email Configuration
+## �� Email Configuration
 
 The platform uses Resend for contact form emails. To set up:
 
