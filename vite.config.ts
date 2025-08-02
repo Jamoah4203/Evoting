@@ -5,7 +5,7 @@ import { createServer } from "./server";
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
-  root: ".", // 👈 Tells Vite where to look for index.html
+  root: " ", // 👈 Tells Vite where to look for index.html
   server: {
     host: "::",
     port: 8080,
