@@ -4,7 +4,7 @@
   "installCommand": "npm install",
   "functions": {
     "api/[...path].ts": {
-      "runtime": "nodejs18.x"
+      "runtime": "nodejs18"
     }
   },
   "rewrites": [
