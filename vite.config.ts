@@ -5,12 +5,16 @@ import { createServer } from "./server";
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
+  root: ".", // 👈 Tells Vite where to look for index.html
   server: {
     host: "::",
     port: 8080,
   },
   build: {
-    outDir: "dist/spa",
+    outDir: "dist",
+    rollupOptions: {
+      input: path.resolve(__dirname, "index.html"), // 👈 Explicitly set entry HTML
+    },
   },
   plugins: [react(), expressPlugin()],
   resolve: {

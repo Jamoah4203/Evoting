@@ -1,6 +1,6 @@
 {
   "buildCommand": "npm run build",
-  "outputDirectory": "dist/spa",
+  "outputDirectory": "dist",
   "installCommand": "npm install",
   "functions": {
     "api/[...path].ts": {
