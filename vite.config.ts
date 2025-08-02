@@ -6,6 +6,7 @@ import path from "path";
 export default defineConfig({
   root: "client", // Vite root is client/
   base: "./",     // ✅ tells Vite to use relative paths in index.html
+  publicDir: "client/public", // Add this for static assets
   server: {
     host: "::",
     port: 8080,
@@ -13,6 +14,7 @@ export default defineConfig({
   build: {
     outDir: "../dist/spa", // matches vercel.json
     emptyOutDir: true,
+    assetsDir: "assets", // Better asset organization
   },
   plugins: [react()],
   resolve: {
